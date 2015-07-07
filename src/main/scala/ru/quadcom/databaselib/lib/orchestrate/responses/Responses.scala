@@ -7,3 +7,5 @@ package ru.quadcom.databaselib.lib.orchestrate.responses
 abstract class BaseResponse(requestId: String)
 
 case class PutResponse(requestId: String, eTag: String, contentLocation: String) extends BaseResponse(requestId)
+
+case class GetResponse[T](requestId: String, eTag: String, value: T, contentLocation: String) extends BaseResponse(requestId)

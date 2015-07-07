@@ -1,4 +1,4 @@
-name := "orchestrate-client-scala"
+name := "orchestrate-scala-client"
 
 version := "1.0-SNAPSHOT"
 

@@ -9,4 +9,6 @@ object Constants {
   val LocationHeader = "Location"
   val ETagHeader = "ETag"
   val IfMatchHeader = "If-Match"
+  val IfNoneMatchHeader = "If-None-Match"
+  val ContentLocationHeader = "Content-Location"
 }
