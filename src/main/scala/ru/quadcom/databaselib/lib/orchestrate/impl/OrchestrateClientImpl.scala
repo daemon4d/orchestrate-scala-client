@@ -10,21 +10,21 @@ import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
 import play.api.libs.ws.{DefaultWSClientConfig, WSRequestHolder, WSResponse}
 import ru.quadcom.databaselib.lib.orchestrate.exceptions._
 import ru.quadcom.databaselib.lib.orchestrate.impl.WSHelper._
-import ru.quadcom.databaselib.lib.orchestrate.traits.OrchestrateClient
+import scaldi.{Injectable, Injector}
+
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
-import scala.util.parsing.json.JSONObject
 
 
 /**
  * Created by Dmitry on 7/6/2015.
  */
-class OrchestrateClientImpl(actorSystem: ActorSystem, url: String, key: String) extends OrchestrateClient {
+class OrchestrateClientImpl(implicit inj: Injector) extends Injectable {
 
-  private val executionContext: ExecutionContext = actorSystem.dispatcher
-  private val baseURL: String = url
-  private val apiKey: String = key
-  private val auth = "Basic " + Base64.getEncoder.encodeToString((key + ":").getBytes)
+  private val executionContext: ExecutionContext = inject[ActorSystem](identified by 'orchestrateClientAS).dispatcher
+  private val baseURL = inject[String](identified by 'url)
+  private val apiKey = inject[String](identified by 'key)
+  private val auth = "Basic " + Base64.getEncoder.encodeToString((apiKey + ":").getBytes)
   private val jsonMapper = new ObjectMapper()
 
   private val wsClient = new NingWSClient(new AsyncHttpClientConfig.Builder(new NingAsyncHttpClientConfigBuilder(DefaultWSClientConfig()).build()).build())
@@ -38,6 +38,12 @@ class OrchestrateClientImpl(actorSystem: ActorSystem, url: String, key: String) 
       sb ++= "/" + key
     }
     sb.toString()
+  }
+
+  private def baseSearchRequestUrl(collection: String): String = {
+    val urlBuilder = new mutable.StringBuilder(baseURL)
+    urlBuilder ++= "/" + collection
+    urlBuilder.toString()
   }
 
   def throwExceptionDependsOnStatusCode(response: WSResponse, throwMismatchAndAlreadyPresent: Boolean) = {
@@ -70,6 +76,16 @@ class OrchestrateClientImpl(actorSystem: ActorSystem, url: String, key: String) 
     val url = baseRequestUrl(collection, key)
     wsClient.url(url).withHeaders(("Authorization", auth), ("Content-Type", Constants.ContentType))
   }
+
+  def baseSearchRequestHolder(collection: String, query: String, limit: Int, offset: Int): WSRequestHolder = {
+    var holder = wsClient.url(baseSearchRequestUrl(collection)).withQueryString(("query", query))
+    if (limit > 0)
+      holder = holder.withQueryString(("limit", if (limit < 100) limit.toString else "100"))
+    if (offset > 0)
+      holder = holder.withQueryString(("offset", offset.toString))
+    holder.withHeaders(("Authorization", auth), ("Content-Type", Constants.ContentType))
+  }
+
 }
 
 case class ErrorMessage(message: String, code: String, details: Map[String, Any])

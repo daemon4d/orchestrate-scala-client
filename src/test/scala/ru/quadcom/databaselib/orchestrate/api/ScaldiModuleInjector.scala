@@ -14,6 +14,5 @@ trait ScaldiModuleInjector extends SuiteMixin with Injectable{
 
   abstract override def withFixture(test: NoArgTest) = {
     super.withFixture(test)
-
   }
 }

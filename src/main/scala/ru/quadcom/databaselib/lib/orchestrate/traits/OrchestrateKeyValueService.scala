@@ -1,6 +1,6 @@
 package ru.quadcom.databaselib.lib.orchestrate.traits
 
-import ru.quadcom.databaselib.lib.orchestrate.responses.{GetResponse, PutResponse}
+import ru.quadcom.databaselib.lib.orchestrate.responses.{DeleteResponse, GetResponse, PutResponse}
 
 import scala.concurrent.Future
 
@@ -16,4 +16,6 @@ trait OrchestrateKeyValueService {
   def putIfNotExist(collectionName: String, key: String, obj: AnyRef): Future[PutResponse]
 
   def get[T <: AnyRef](collectionName: String, key: String, tClass: Class[T]): Future[GetResponse[T]]
+
+  def delete(collectionName: String, key: String): Future[DeleteResponse]
 }

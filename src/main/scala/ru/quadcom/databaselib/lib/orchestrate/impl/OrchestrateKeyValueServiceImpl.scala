@@ -3,25 +3,28 @@ package ru.quadcom.databaselib.lib.orchestrate.impl
 import java.io.StringWriter
 
 import akka.actor.ActorSystem
-import akka.dispatch.Futures
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import play.api.libs.ws.WSResponse
-import play.libs.Json
-import ru.quadcom.databaselib.lib.orchestrate.responses.{GetResponse, PutResponse}
-import ru.quadcom.databaselib.lib.orchestrate.traits.{OrchestrateClient, OrchestrateKeyValueService}
-import WSHelper.getHeader
+import ru.quadcom.databaselib.lib.orchestrate.impl.WSHelper.getHeader
+import ru.quadcom.databaselib.lib.orchestrate.responses.{DeleteResponse, GetResponse, PutResponse}
+import ru.quadcom.databaselib.lib.orchestrate.traits.OrchestrateKeyValueService
+import scaldi.{Injectable, Injector}
+
 import scala.concurrent.Future
 
 /**
  * Created by Dmitry on 7/7/2015.
  */
-class OrchestrateKeyValueServiceImpl(actorSystem: ActorSystem, client: OrchestrateClient) extends OrchestrateKeyValueService {
-  private implicit val ec = actorSystem.dispatcher
+class OrchestrateKeyValueServiceImpl(implicit inj: Injector) extends OrchestrateKeyValueService with Injectable {
 
-  private val gsonMapper = new ObjectMapper()
+  private implicit val ec = inject[ActorSystem](identified by 'orchestrateClientAS).dispatcher
 
-  gsonMapper.registerModule(DefaultScalaModule)
+  private val client = inject[OrchestrateClientImpl]
+
+  private val jsonMapper = new ObjectMapper()
+
+  jsonMapper.registerModule(DefaultScalaModule)
 
   private def putWithHeaders(collectionName: String, key: String, obj: AnyRef, eTag: String, notExist: Boolean, throwMismatchOrAlreadyPresentedException: Boolean): Future[PutResponse] = {
     var holder = client.baseRequestHolder(collectionName, key)
@@ -33,7 +36,7 @@ class OrchestrateKeyValueServiceImpl(actorSystem: ActorSystem, client: Orchestra
       }
     }
     val out = new StringWriter
-    gsonMapper.writeValue(out, obj)
+    jsonMapper.writeValue(out, obj)
     holder.put(out.toString).flatMap((response: WSResponse) => {
       if (response.status != 201) {
         client.throwExceptionDependsOnStatusCode(response, throwMismatchOrAlreadyPresentedException)
@@ -67,8 +70,19 @@ class OrchestrateKeyValueServiceImpl(actorSystem: ActorSystem, client: Orchestra
         val reqId = getHeader(response, Constants.OrchestrateReqIdHeader)
         val eTag = getHeader(response, Constants.ETagHeader)
         val location = getHeader(response, Constants.ContentLocationHeader)
-        val objVal = gsonMapper.readValue(response.body, tClass)
-        new GetResponse[T](reqId, eTag, objVal, location)
+        val objVal = jsonMapper.readValue(response.body, tClass)
+        GetResponse[T](reqId, eTag, objVal, location)
+      }
+    })
+  }
+
+  override def delete(collectionName: String, key: String): Future[DeleteResponse] = {
+    client.baseRequestHolder(collectionName, key).delete().flatMap((response: WSResponse) => {
+      Future {
+        if (response.status != 204)
+          client.throwExceptionDependsOnStatusCode(response, throwMismatchAndAlreadyPresent = true)
+        val reqId = getHeader(response, Constants.OrchestrateReqIdHeader)
+        DeleteResponse(reqId)
       }
     })
   }
