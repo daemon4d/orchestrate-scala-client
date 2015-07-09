@@ -69,4 +69,6 @@ Search Orchestrate api is accessible via trait [**OrchestrateSearchService**](ht
         trait OrchestrateSearchService {
             def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T], limit: Int = -1, offset: Int = -1): Future[SearchResponse[T]]
         }
+        
+One of the [**following exceptions**](https://github.com/daemon4d/orchestrate-scala-client/tree/master/src/main/scala/ru/quadcom/databaselib/lib/orchestrate/exceptions) are generated in case of request failure.
 
