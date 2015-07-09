@@ -22,8 +22,8 @@ import scala.concurrent.ExecutionContext
 class OrchestrateClientImpl(implicit inj: Injector) extends Injectable {
 
   private val executionContext: ExecutionContext = inject[ActorSystem](identified by 'orchestrateClientAS).dispatcher
-  private val baseURL = inject[String](identified by 'url)
-  private val apiKey = inject[String](identified by 'key)
+  private val baseURL = inject[String](identified by 'orchestrateApiURL)
+  private val apiKey = inject[String](identified by 'applicationKey)
   private val auth = "Basic " + Base64.getEncoder.encodeToString((apiKey + ":").getBytes)
 
 
