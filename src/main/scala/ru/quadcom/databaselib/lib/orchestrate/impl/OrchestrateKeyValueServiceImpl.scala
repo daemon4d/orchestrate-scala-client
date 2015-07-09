@@ -1,10 +1,7 @@
 package ru.quadcom.databaselib.lib.orchestrate.impl
 
-import java.io.StringWriter
-
 import akka.actor.ActorSystem
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.google.gson.Gson
 import play.api.libs.ws.WSResponse
 import ru.quadcom.databaselib.lib.orchestrate.impl.WSHelper.getHeader
 import ru.quadcom.databaselib.lib.orchestrate.responses.{DeleteResponse, GetResponse, PutResponse}
@@ -22,9 +19,7 @@ class OrchestrateKeyValueServiceImpl(implicit inj: Injector) extends Orchestrate
 
   private val client = inject[OrchestrateClientImpl]
 
-  private val jsonMapper = new ObjectMapper()
-
-  jsonMapper.registerModule(DefaultScalaModule)
+  private val gson = new Gson()
 
   private def putWithHeaders(collectionName: String, key: String, obj: AnyRef, eTag: String, notExist: Boolean, throwMismatchOrAlreadyPresentedException: Boolean): Future[PutResponse] = {
     var holder = client.baseRequestHolder(collectionName, key)
@@ -35,9 +30,7 @@ class OrchestrateKeyValueServiceImpl(implicit inj: Injector) extends Orchestrate
         holder = holder.withHeaders((Constants.IfNoneMatchHeader, "\"*\""))
       }
     }
-    val out = new StringWriter
-    jsonMapper.writeValue(out, obj)
-    holder.put(out.toString).flatMap((response: WSResponse) => {
+    holder.put(gson.toJson(obj)).flatMap((response: WSResponse) => {
       if (response.status != 201) {
         client.throwExceptionDependsOnStatusCode(response, throwMismatchOrAlreadyPresentedException)
       }
@@ -70,7 +63,7 @@ class OrchestrateKeyValueServiceImpl(implicit inj: Injector) extends Orchestrate
         val reqId = getHeader(response, Constants.OrchestrateReqIdHeader)
         val eTag = getHeader(response, Constants.ETagHeader)
         val location = getHeader(response, Constants.ContentLocationHeader)
-        val objVal = jsonMapper.readValue(response.body, tClass)
+        val objVal = gson.fromJson(response.body, tClass)
         GetResponse[T](reqId, eTag, objVal, location)
       }
     })

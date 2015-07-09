@@ -10,16 +10,4 @@ case class Player(name: String, age: Int)
 
 object Player {
   val CollectionName = "players"
-
-  implicit object PlayerReads extends Format[Player] {
-    def reads(json: JsValue) = JsSuccess(Player(
-      (json \ "name").as[String],
-      (json \ "age").as[Int]
-    ))
-
-    def writes(ts: Player) = JsObject(Seq(
-      "name" -> JsString(ts.name),
-      "age" -> JsNumber(ts.age)
-    ))
-  }
 }

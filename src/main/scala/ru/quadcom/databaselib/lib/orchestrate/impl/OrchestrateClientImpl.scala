@@ -1,10 +1,10 @@
 package ru.quadcom.databaselib.lib.orchestrate.impl
 
+import java.lang.reflect.Type
 import java.util.Base64
 
 import akka.actor.ActorSystem
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.google.gson.{InstanceCreator, GsonBuilder, Gson}
 import com.ning.http.client.AsyncHttpClientConfig
 import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
 import play.api.libs.ws.{DefaultWSClientConfig, WSRequestHolder, WSResponse}
@@ -25,11 +25,13 @@ class OrchestrateClientImpl(implicit inj: Injector) extends Injectable {
   private val baseURL = inject[String](identified by 'url)
   private val apiKey = inject[String](identified by 'key)
   private val auth = "Basic " + Base64.getEncoder.encodeToString((apiKey + ":").getBytes)
-  private val jsonMapper = new ObjectMapper()
+
 
   private val wsClient = new NingWSClient(new AsyncHttpClientConfig.Builder(new NingAsyncHttpClientConfigBuilder(DefaultWSClientConfig()).build()).build())
 
-  jsonMapper.registerModule(DefaultScalaModule)
+  private val gson = new GsonBuilder().registerTypeAdapter(classOf[mutable.Map[String,AnyRef]], new MapCreator()).create()
+
+  new Gson()
 
   private def baseRequestUrl(collection: String, key: String): String = {
     val sb = new mutable.StringBuilder()
@@ -48,7 +50,7 @@ class OrchestrateClientImpl(implicit inj: Injector) extends Injectable {
 
   def throwExceptionDependsOnStatusCode(response: WSResponse, throwMismatchAndAlreadyPresent: Boolean) = {
     val reqId = getHeader(response, Constants.OrchestrateReqIdHeader)
-    val errorMessage = jsonMapper.readValue(response.body, classOf[ErrorMessage])
+    val errorMessage = gson.fromJson(response.body, classOf[ErrorMessage])
     val statusAndErrCode = (response.status, errorMessage.code)
     statusAndErrCode match {
       case (400, "api_bad_request") => throw new ApiBadRequestOrchestrateRuntimeException(reqId)
@@ -88,4 +90,8 @@ class OrchestrateClientImpl(implicit inj: Injector) extends Injectable {
 
 }
 
-case class ErrorMessage(message: String, code: String, details: Map[String, Any])
+private class MapCreator extends InstanceCreator[mutable.Map[String, Any]] {
+  override def createInstance(`type`: Type): mutable.Map[String, Any] = mutable.Map.empty
+}
+
+case class ErrorMessage(message: String, code: String, details: mutable.Map[String, Any])

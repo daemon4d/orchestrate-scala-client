@@ -11,8 +11,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-actor_2.11" % "2.4-SNAPSHOT",
   "com.typesafe.play" %% "play-ws" % "2.4.0-M2",
   "org.scaldi" %% "scaldi-akka" % "0.5.6",
-  "com.fasterxml.jackson.module" % "jackson-module-scala_2.10" % "2.5.3",
-  "joda-time" % "joda-time" % "2.8.1"
+  "joda-time" % "joda-time" % "2.8.1",
+  "com.google.code.gson" % "gson" % "1.7.1"
 )
 
 resolvers += "Sonatype snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"

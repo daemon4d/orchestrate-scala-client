@@ -46,7 +46,7 @@ class SearchServiceTests extends OrchestrateAPISpec with BeforeAndAfterAll {
 
   "SearchService " should " find two player1 inventory items" in {
     val searchService = inject[OrchestrateSearchService]
-    val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, "ownerId:player1")
+    val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, "ownerId:player1", classOf[InventoryItem])
     val searchResult = Await.result(searchFuture, 5.seconds)
     assertResult(2)(searchResult.results.size)
     for (result <- searchResult.results)
@@ -57,7 +57,7 @@ class SearchServiceTests extends OrchestrateAPISpec with BeforeAndAfterAll {
     val searchService = inject[OrchestrateSearchService]
     val nowTime = DateTime.now(DateTimeZone.UTC)
     val query = "acquisitionDate:[" + DateFormatHelper.dateToString(nowTime.minusMinutes(1)) + " TO " + DateFormatHelper.dateToString(nowTime.plusDays(2)) + "]"
-    val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, query)
+    val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, query, classOf[InventoryItem])
     val searchResult = Await.result(searchFuture, 5.seconds)
     assertResult(2)(searchResult.results.size)
   }

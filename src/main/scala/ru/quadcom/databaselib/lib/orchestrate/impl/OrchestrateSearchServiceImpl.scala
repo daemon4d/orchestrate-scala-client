@@ -1,11 +1,11 @@
 package ru.quadcom.databaselib.lib.orchestrate.impl
 
 import akka.actor.ActorSystem
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.google.common.reflect.{TypeParameter, TypeToken}
+import com.google.gson.Gson
 import play.api.libs.json.Reads
 import play.api.libs.ws.WSResponse
-import ru.quadcom.databaselib.lib.orchestrate.responses.SearchResponse
+import ru.quadcom.databaselib.lib.orchestrate.responses.{InnerSearchResponse, SearchResponse}
 import ru.quadcom.databaselib.lib.orchestrate.traits.OrchestrateSearchService
 import scaldi.{Injector, Injectable}
 
@@ -20,24 +20,28 @@ class OrchestrateSearchServiceImpl(implicit inj: Injector) extends OrchestrateSe
 
   private val client = inject[OrchestrateClientImpl]
 
-  private val jsonMapper = new ObjectMapper()
+  private val gson = new Gson()
 
-  jsonMapper.registerModule(DefaultScalaModule)
-
-  override def search[T<: AnyRef](collectionName: String, query: String)(implicit fjs: Reads[T]): Future[SearchResponse[T]] = {
-    search(collectionName, query, -1, -1)
+  override def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T]): Future[SearchResponse[T]] = {
+    search(collectionName, query, -1, -1, tClass)
   }
 
-  override def search[T <: AnyRef](collectionName: String, query: String, limit: Int, offset: Int)(implicit fjs: Reads[T]): Future[SearchResponse[T]] = {
+  override def search[T <: AnyRef](collectionName: String, query: String, limit: Int, offset: Int, tClass: Class[T]): Future[SearchResponse[T]] = {
     client.baseSearchRequestHolder(collectionName, query, limit, offset).get().flatMap((response: WSResponse) => {
       if (response.status != 200)
         client.throwExceptionDependsOnStatusCode(response, throwMismatchAndAlreadyPresent = true)
 
       val reqId = WSHelper.getHeader(response, Constants.OrchestrateReqIdHeader)
-      val searchResponse = play.api.libs.json.Json.parse(response.body).as[SearchResponse[T]]
+      val searchResponse =jsonDeserialize(response.body, tClass)
       Future {
         searchResponse.copy(requestId = reqId)
       }
     })
+  }
+
+  private def jsonDeserialize[T <: AnyRef](str: String, tClass: Class[T]): SearchResponse[T] = {
+    val tToken = TypeToken.of(tClass)
+    val innerSearchType = new TypeToken[SearchResponse[T]]() {}.where(new TypeParameter[T]() {}, tToken).getType
+    gson.fromJson(str, innerSearchType)
   }
 }
