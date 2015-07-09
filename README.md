@@ -1,2 +1,4 @@
-# orchestrate-scala-client
-Scala client for orchestrate.io service
+orchestrate-scala-client
+========================
+
+Scala client for [**Orchestrate.io**](http://orchestrate.io) service
