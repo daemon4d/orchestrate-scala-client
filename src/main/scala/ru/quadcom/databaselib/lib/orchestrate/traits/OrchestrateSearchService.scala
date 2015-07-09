@@ -9,7 +9,5 @@ import scala.concurrent.Future
  * Created by Dmitry on 7/8/2015.
  */
 trait OrchestrateSearchService {
-  def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T]): Future[SearchResponse[T]]
-
-  def search[T <: AnyRef](collectionName: String, query: String, limit: Int, offset: Int, tClass: Class[T]): Future[SearchResponse[T]]
+  def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T], limit: Int = -1, offset: Int = -1): Future[SearchResponse[T]]
 }

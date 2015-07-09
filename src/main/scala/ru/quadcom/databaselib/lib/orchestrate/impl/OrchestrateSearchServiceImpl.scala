@@ -22,11 +22,7 @@ class OrchestrateSearchServiceImpl(implicit inj: Injector) extends OrchestrateSe
 
   private val gson = new Gson()
 
-  override def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T]): Future[SearchResponse[T]] = {
-    search(collectionName, query, -1, -1, tClass)
-  }
-
-  override def search[T <: AnyRef](collectionName: String, query: String, limit: Int, offset: Int, tClass: Class[T]): Future[SearchResponse[T]] = {
+  override def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T], limit: Int, offset: Int): Future[SearchResponse[T]] = {
     client.baseSearchRequestHolder(collectionName, query, limit, offset).get().flatMap((response: WSResponse) => {
       if (response.status != 200)
         client.throwExceptionDependsOnStatusCode(response, throwMismatchAndAlreadyPresent = true)

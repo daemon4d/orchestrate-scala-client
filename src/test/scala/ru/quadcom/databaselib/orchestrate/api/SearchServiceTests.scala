@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import model.InventoryItem
 import org.joda.time.{DateTimeZone, DateTime}
 import org.scalatest.BeforeAndAfterAll
+import ru.quadcom.databaselib.lib.orchestrate.exceptions.{SearchIndexNotFoundOrchestrateRuntimeException, SearchQueryMalformedOrchestrateRuntimeException}
 import ru.quadcom.databaselib.lib.orchestrate.traits.{OrchestrateKeyValueService, OrchestrateSearchService}
 import utils.DateFormatHelper
 
@@ -53,6 +54,22 @@ class SearchServiceTests extends OrchestrateAPISpec with BeforeAndAfterAll {
       assertResult("player1")(result.value.ownerId)
   }
 
+  "Search " should " find one inventory item with offset=0 and limit=1" in {
+    val searchService = inject[OrchestrateSearchService]
+    val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, "ownerId:player1", classOf[InventoryItem], 1, 0)
+    val searchResult = Await.result(searchFuture, 5.seconds)
+    assertResult(1)(searchResult.results.size)
+    assertResult(false)(searchResult.next.isEmpty)
+  }
+
+  "Search " should " find one inventory item with offset=1 and limit=1" in {
+    val searchService = inject[OrchestrateSearchService]
+    val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, "ownerId:player1", classOf[InventoryItem], 1, 1)
+    val searchResult = Await.result(searchFuture, 5.seconds)
+    assertResult(1)(searchResult.results.size)
+    assertResult(null)(searchResult.next)
+  }
+
   "SearchService " should " find two items both bought before tomorrow" in {
     val searchService = inject[OrchestrateSearchService]
     val nowTime = DateTime.now(DateTimeZone.UTC)
@@ -60,5 +77,13 @@ class SearchServiceTests extends OrchestrateAPISpec with BeforeAndAfterAll {
     val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, query, classOf[InventoryItem])
     val searchResult = Await.result(searchFuture, 5.seconds)
     assertResult(2)(searchResult.results.size)
+  }
+
+  "SearchService " should " generate SearchQueryMalformedOrchestrateRuntimeException on malformed query " in {
+    val searchService = inject[OrchestrateSearchService]
+    intercept[SearchQueryMalformedOrchestrateRuntimeException] {
+      val searchFuture = searchService.search[InventoryItem](InventoryItem.CollectionName, "{+-", classOf[InventoryItem])
+      val searchResult = Await.result(searchFuture, 5.seconds)
+    }
   }
 }

@@ -14,7 +14,7 @@ case class GetResponse[T](requestId: String, eTag: String, value: T, contentLoca
 
 case class DeleteResponse(requestId: String) extends BaseResponse(requestId)
 
-case class SearchResponse[T <: AnyRef](requestId: String, count: Int, total_count: Int, results: Array[InnerSearchResponse[T]]) extends BaseResponse(requestId)
+case class SearchResponse[T <: AnyRef](requestId: String, count: Int, total_count: Int, results: Array[InnerSearchResponse[T]], next: String) extends BaseResponse(requestId)
 
 case class SearchPath(collection: String, key: String, ref: String, kind: String, reftime: Long)
 
