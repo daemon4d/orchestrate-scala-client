@@ -36,5 +36,16 @@ In order to use library services one should define Scaldi module similar to modu
             bind[OrchestrateSearchService] to new OrchestrateSearchServiceImpl
         }
 
+After injector initialization it can be used via Scaldi Injectable trait. 
 
+        implicit val injector = new AppModule
+        
+        class InjectionsTests extends Injectable {
+            
+            "OrchestrateKeyValueService" should " be initialized " in {
+                val keyValueServ = inject[OrchestrateKeyValueService]
+                assert(keyValueServ != null)
+            }
+            
+        }
 
