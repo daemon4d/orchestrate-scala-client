@@ -48,4 +48,25 @@ After injector initialization it can be used via Scaldi Injectable trait.
             }
             
         }
+        
+Key/Value Orchestrate api is accessible via trait [**OrchestrateKeyValueService**] (https://github.com/daemon4d/orchestrate-scala-client/blob/master/src/main/scala/ru/quadcom/databaselib/lib/orchestrate/traits/OrchestrateKeyValueService.scala)
+        
+        trait OrchestrateKeyValueService {
+        
+            def put(collectionName: String, key: String, obj: AnyRef): Future[PutResponse]
+        
+            def putIfVersionTheSame(collectionName: String, key: String, obj: AnyRef, eTag: String): Future[PutResponse]
+            
+            def putIfNotExist(collectionName: String, key: String, obj: AnyRef): Future[PutResponse]
+            
+            def get[T <: AnyRef](collectionName: String, key: String, tClass: Class[T]): Future[GetResponse[T]]
+                    
+            def delete(collectionName: String, key: String): Future[DeleteResponse]
+        }
+        
+Search Orchestrate api is accessible via trait [**OrchestrateSearchService**](https://github.com/daemon4d/orchestrate-scala-client/blob/master/src/main/scala/ru/quadcom/databaselib/lib/orchestrate/traits/OrchestrateSearchService.scala)
+
+        trait OrchestrateSearchService {
+            def search[T <: AnyRef](collectionName: String, query: String, tClass: Class[T], limit: Int = -1, offset: Int = -1): Future[SearchResponse[T]]
+        }
 
