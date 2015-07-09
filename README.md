@@ -5,7 +5,7 @@ Scala client library for [**Orchestrate.io**](http://orchestrate.io) service
 
 The snapshot builds of library can be found at [**our company Nexus**](http://nexus.quadcom.biz:9081/nexus/content/repositories/snapshots) 
 
-Current version is **1.0.0-SNAPSHOT**
+Current version can be found at library [**pom**](https://github.com/daemon4d/orchestrate-scala-client/blob/master/pom.xml)
 
 Dependency for projects build with SBT 
 
